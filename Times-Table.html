@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-100 text-slate-800">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10 Times Table Lab</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Noto+Serif+Hebrew:wght@600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    .font-display {
+      font-family: 'Fredoka', cursive, sans-serif;
+    }
+    .font-hebrew {
+      font-family: 'Noto Serif Hebrew', serif;
+    }
+    
+    /* Scrollbar refinements */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.03);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.18);
+      border-radius: 99px;
+    }
+
+    /* Cell state colors & glow effects */
+    .cell-gray {
+      background-color: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #cbd5e1;
+    }
+    .cell-gray:hover {
+      background-color: #e2e8f0;
+    }
+    
+    .cell-yellow {
+      background: linear-gradient(135deg, #fef9c3, #fde047);
+      color: #713f12;
+      border: 1.5px solid #eab308;
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.35);
+      animation: light-pulse-glow 2.5s infinite alternate ease-in-out;
+    }
+    
+    .cell-orange {
+      background: linear-gradient(135deg, #ffedd5, #fdba74);
+      color: #7c2d12;
+      border: 1.5px solid #f97316;
+      box-shadow: 0 2px 6px rgba(249, 115, 22, 0.2);
+    }
+    
+    .cell-green {
+      background: linear-gradient(135deg, #dcfce7, #86efac);
+      color: #14532d;
+      border: 1.5px solid #22c55e;
+      box-shadow: 0 2px 6px rgba(34, 197, 94, 0.2);
+    }
+
+    @keyframes light-pulse-glow {
+      0% { box-shadow: 0 0 4px rgba(234, 179, 8, 0.25); transform: scale(1); }
+      100% { box-shadow: 0 0 14px rgba(234, 179, 8, 0.55); transform: scale(1.02); }
+    }
+
+    .cell-animating {
+      animation: cell-bounce 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes cell-bounce {
+      0% { transform: scale(0.85); opacity: 0.8; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .animate-shake {
+      animation: shake 0.4s ease-in-out;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+
+    /* Multi-step slide transitions */
+    .step-fade-in {
+      animation: stepFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes stepFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Print Stylesheet for Multi-Page Worksheet */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+        overflow: visible !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .print-page {
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        margin: 0 !important;
+        padding: 0.4in !important;
+        box-shadow: none !important;
+        border: none !important;
+        width: 100% !important;
+        min-height: 100vh !important;
+      }
+      .print-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      @page {
+        size: letter portrait;
+        margin: 0.2in;
+      }
+    }
+    .print-only {
+      display: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen w-full bg-slate-100 text-slate-800 antialiased flex flex-col overflow-y-auto">
+
+  <header class="no-print sticky top-0 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-4 py-2 flex items-center justify-between shrink-0 z-40 shadow-sm gap-2">
+    <!-- App Brand -->
+    <div class="flex items-center gap-2.5 shrink-0">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-display font-bold text-white text-xl shadow-md shadow-amber-500/30">
+        10
+      </div>
+      <div class="hidden xs:block">
+        <h1 class="font-display text-base sm:text-lg font-bold text-slate-900 leading-none">
+          10 Times Table Lab
+        </h1>
+        <span class="text-[10px] text-slate-500 tracking-wider uppercase font-semibold block mt-0.5">Interactive Math Hub</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs (Horizontally Scrollable on Mobile) -->
+    <nav class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80 overflow-x-auto max-w-full">
+      <button onclick="switchTab('map')" id="tab-map" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap bg-white text-amber-600 shadow-sm border border-slate-200">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        Map
+      </button>
+      <button onclick="switchTab('tips')" id="tab-tips" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 whitespace-nowrap">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        Tips & Tricks
+      </button>
+      <button onclick="switchTab('practice')" id="tab-practice" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 whitespace-nowrap">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Practice
+      </button>
+      <button onclick="switchTab('print')" id="tab-print" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 whitespace-nowrap">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        Print Worksheet
+      </button>
+    </nav>
+
+    <!-- Controls -->
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button id="remote-status-btn" onclick="openRemoteModal()" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 border border-slate-300 transition" title="Teacher Remote">
+        <span id="remote-dot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+        <span id="remote-text" class="hidden sm:inline">Remote</span>
+      </button>
+      
+      <button onclick="toggleSound()" id="sound-btn" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-amber-600 border border-slate-300 transition" title="Toggle Sound">
+        <svg id="sound-icon-on" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+        <svg id="sound-icon-off" class="w-4 h-4 hidden text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
+      </button>
+
+      <button onclick="toggleFullscreen()" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition" title="Toggle Fullscreen">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 p-2 sm:p-4 max-w-7xl w-full mx-auto flex flex-col min-h-0">
+    
+    <!-- ==================== TAB 1: THE MAP ==================== -->
+    <div id="view-map" class="flex-1 flex flex-col gap-2 min-h-0">
+      
+      <div class="no-print flex items-center justify-between gap-3 px-3 py-2 bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-x-auto whitespace-nowrap text-xs">
+        <!-- Legend Items -->
+        <div class="flex items-center gap-3 shrink-0">
+          <span class="font-display font-bold text-slate-700 uppercase tracking-wider text-[11px]">Legend:</span>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3.5 h-3.5 rounded bg-slate-200 border border-slate-300"></span>
+            <span class="text-slate-600 font-medium">New (Gray)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3.5 h-3.5 rounded bg-amber-300 border border-amber-400 shadow-sm"></span>
+            <span class="text-amber-800 font-semibold">Growth (Yellow)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3.5 h-3.5 rounded bg-orange-300 border border-orange-400"></span>
+            <span class="text-orange-900 font-semibold">Progressing (Orange)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3.5 h-3.5 rounded bg-emerald-300 border border-emerald-400"></span>
+            <span class="text-emerald-900 font-semibold">Mastered (Green)</span>
+          </div>
+        </div>
+
+        <!-- Stats Summary on exact same line -->
+        <div class="flex items-center gap-3 font-semibold text-slate-600 shrink-0">
+          <button onclick="resetMapGrid()" class="text-[11px] font-bold text-slate-500 hover:text-rose-600 underline transition">Reset Grid</button>
+          <div id="map-stats-summary" class="flex items-center gap-3 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 text-xs">
+            <!-- Stats calculated dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-1 w-full bg-white rounded-2xl border border-slate-200 shadow-md p-2 overflow-x-auto overflow-y-auto">
+        <div id="grid-cells-container" class="grid grid-cols-12 min-w-[500px] gap-1 sm:gap-1.5"></div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 2: TIPS & TRICKS ==================== -->
+    <div id="view-tips" class="flex-1 hidden flex flex-col gap-3 min-h-0 overflow-y-auto">
+      
+      <!-- Top Manual Lesson Selector Bar (Scrollable on small screens) -->
+      <div class="no-print flex items-center gap-1.5 overflow-x-auto pb-1 shrink-0">
+        <div id="lesson-buttons-list" class="flex gap-1.5">
+          <!-- Dynamic lesson buttons inserted here -->
+        </div>
+      </div>
+
+      <!-- Active Interactive Lesson Card -->
+      <div class="flex-1 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 flex flex-col justify-between overflow-y-auto shadow-md min-h-[480px]">
+        
+        <!-- Lesson Header with Clear Focus Title & Step Navigator -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-2">
+          <div>
+            <span id="lesson-focus-tag" class="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full border border-amber-300 inline-block mb-1">
+              Focus: Multiplying by 10
+            </span>
+            <h2 id="lesson-title" class="text-xl sm:text-2xl font-display font-bold text-slate-900">
+              The Magic Zero Trick
+            </h2>
+          </div>
+
+          <!-- Step Navigation Controls (Step X of Y with Prev / Next Step buttons) -->
+          <div id="step-nav-controls" class="flex items-center gap-2 self-start sm:self-auto bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+            <button onclick="prevStepInTip()" id="btn-prev-step" class="px-3 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 transition disabled:opacity-40 disabled:cursor-not-allowed">
+              ← Prev Step
+            </button>
+            <span id="lesson-step-counter" class="text-xs font-bold text-amber-700 px-2 whitespace-nowrap">
+              Step 1 of 3
+            </span>
+            <button onclick="nextStepInTip()" id="btn-next-step" class="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-sm transition disabled:opacity-40 disabled:cursor-not-allowed">
+              Next Step →
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Animated Step Stage -->
+        <div id="lesson-visual-stage" class="flex-1 my-3 flex flex-col items-center justify-center relative rounded-xl bg-slate-50 border border-slate-200 p-4 sm:p-6 min-h-[240px] step-fade-in">
+          <!-- Step visual content & dynamic interactive demonstration rendered here -->
+        </div>
+
+        <!-- Takeaway Box & Key Example Pills -->
+        <div class="bg-amber-50/70 rounded-xl p-3 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs sm:text-sm gap-2">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">💡</div>
+            <div>
+              <span class="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">Rule Takeaway</span>
+              <p id="lesson-takeaway" class="font-semibold text-slate-800">Any number multiplied by 10 slides left and adds a zero in ones place.</p>
+            </div>
+          </div>
+          <div id="lesson-examples-pills" class="flex items-center gap-1.5 flex-wrap shrink-0">
+            <!-- Example pills -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: PRACTICE ==================== -->
+    <div id="view-practice" class="flex-1 hidden flex flex-col md:flex-row gap-4 min-h-0 overflow-y-auto">
+      <!-- Session Settings Sidebar -->
+      <div class="w-full md:w-80 bg-white rounded-2xl border border-slate-200 p-4 flex flex-col justify-between shrink-0 shadow-md">
+        <div>
+          <h2 class="font-display text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+            Practice Setup
+          </h2>
+
+          <!-- Status Pool Filters -->
+          <div class="mb-4">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Question Pool Status</label>
+            <div class="grid grid-cols-2 gap-1.5 text-xs">
+              <button onclick="setPracticePool('all')" id="pool-all" class="p-2 rounded-lg bg-amber-100 text-amber-900 font-bold border border-amber-300 text-left">All Facts</button>
+              <button onclick="setPracticePool('yellow')" id="pool-yellow" class="p-2 rounded-lg bg-slate-100 text-slate-600 font-semibold border border-slate-200 text-left">Growth (Yellow)</button>
+              <button onclick="setPracticePool('orange')" id="pool-orange" class="p-2 rounded-lg bg-slate-100 text-slate-600 font-semibold border border-slate-200 text-left">Progressing (Orange)</button>
+              <button onclick="setPracticePool('green')" id="pool-green" class="p-2 rounded-lg bg-slate-100 text-slate-600 font-semibold border border-slate-200 text-left">Mastered (Green)</button>
+            </div>
+          </div>
+
+          <!-- Factor Range -->
+          <div class="mb-4">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Factor Range</label>
+            <select id="practice-range" onchange="updatePracticeSettings()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-amber-500">
+              <option value="0-10">Full Range (0 – 10)</option>
+              <option value="0-5">Lower Range (0 – 5)</option>
+              <option value="6-10">Upper Range (6 – 10)</option>
+            </select>
+          </div>
+
+          <!-- Round Length -->
+          <div class="mb-4">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Round Length</label>
+            <div class="flex gap-2">
+              <button onclick="setPracticeCount(10)" id="count-10" class="flex-1 py-1.5 rounded-lg bg-amber-100 text-amber-900 font-bold border border-amber-300 text-xs">10 Qs</button>
+              <button onclick="setPracticeCount(20)" id="count-20" class="flex-1 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-semibold border border-slate-200 text-xs">20 Qs</button>
+              <button onclick="setPracticeCount(30)" id="count-30" class="flex-1 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-semibold border border-slate-200 text-xs">30 Qs</button>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="startPracticeSession()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-display font-bold text-base shadow-md shadow-amber-500/20 active:scale-[0.98] transition">
+          Start Session
+        </button>
+      </div>
+
+      <!-- Main Display Screen -->
+      <div class="flex-1 bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 flex flex-col items-center justify-between relative shadow-md min-h-[400px]">
+        
+        <!-- Score & Progress Bar Header -->
+        <div class="w-full flex items-center justify-between border-b border-slate-200 pb-3">
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Progress</span>
+            <div class="w-28 sm:w-36 h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+              <div id="practice-progress-bar" class="h-full bg-gradient-to-r from-amber-400 to-emerald-500 transition-all duration-300 w-0"></div>
+            </div>
+            <span id="practice-progress-text" class="text-xs font-bold text-slate-700">0 / 10</span>
+          </div>
+
+          <div class="flex items-center gap-3 text-xs font-bold">
+            <span id="practice-streak-tag" class="hidden text-amber-600 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">🔥 <span id="practice-streak-count">0</span> Streak</span>
+            <span class="text-emerald-600 flex items-center gap-1">
+              ✓ <span id="practice-score-correct">0</span>
+            </span>
+            <span class="text-rose-600 flex items-center gap-1">
+              ✗ <span id="practice-score-wrong">0</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Big Display Box -->
+        <div id="practice-active-box" class="flex-1 my-4 flex flex-col items-center justify-center">
+          <div id="practice-question-text" class="font-display text-5xl sm:text-7xl font-extrabold text-slate-900 tracking-wider mb-4">
+            7 × 10 = ?
+          </div>
+          
+          <!-- Answer Input Frame -->
+          <div id="practice-input-box" class="w-48 sm:w-56 h-18 sm:h-20 rounded-2xl bg-slate-50 border-2 border-amber-400 flex items-center justify-center font-display text-4xl sm:text-5xl font-bold text-amber-600 shadow-inner tracking-widest transition-all">
+            <span id="practice-input-value"></span>
+            <span class="animate-pulse text-amber-400">|</span>
+          </div>
+          <span class="text-[11px] text-slate-400 mt-2 font-medium">Use keypad or keyboard</span>
+        </div>
+
+        <!-- Touch Screen Keypad -->
+        <div class="w-full max-w-xs sm:max-w-sm grid grid-cols-3 gap-2">
+          <button onclick="pressKey('1')" class="h-11 sm:h-12 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-amber-200 font-display text-xl sm:text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm transition">1</button>
+          <button onclick="pressKey('2')" class="h-11 sm:h-12 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-amber-200 font-display text-xl sm:text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm transition">2</button>
+          <button onclick="pressKey('3')" class="h-11 sm:h-12 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-amber-200 font-display text-xl sm:text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm transition">3</button>
+          <button onclick="pressKey('4')" class="h-11 sm:h-12 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-amber-200 font-display text-xl sm:text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm transition">4</button>
+          <button onclick="pressKey('5')" class="h-11 sm:h-12 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-amber-200 font-display text-xl sm:text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm transition">5</button>
+          <button onclick="pressKey('6')" class="h-11 sm:h-12 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-amber-200 font-display text-xl sm:text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm transition">6</button>
+          <button onclick="pressKey('7')" class="h-11 sm:h-12 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-amber-200 font-display text-xl sm:text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm transition">7</button>
+          <button onclick="pressKey('8')" class="h-11 sm:h-12 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-amber-200 font-display text-xl sm:text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm transition">8</button>
+          <button onclick="pressKey('9')" class="h-11 sm:h-12 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-amber-200 font-display text-xl sm:text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm transition">9</button>
+          <button onclick="pressKey('back')" class="h-11 sm:h-12 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-display text-lg sm:text-xl font-bold border border-rose-200 transition">⌫</button>
+          <button onclick="pressKey('0')" class="h-11 sm:h-12 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-amber-200 font-display text-xl sm:text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm transition">0</button>
+          <button onclick="pressKey('submit')" class="h-11 sm:h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-display text-xl sm:text-2xl font-bold shadow-md shadow-emerald-500/20 transition">✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 4: PRINT WORKSHEET ==================== -->
+    <div id="view-print" class="flex-1 hidden flex flex-col md:flex-row gap-4 min-h-0 overflow-y-auto">
+      <!-- Worksheet Config Sidebar -->
+      <div class="no-print w-full md:w-80 bg-white rounded-2xl border border-slate-200 p-4 flex flex-col justify-between shrink-0 shadow-md">
+        <div>
+          <h2 class="font-display text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Worksheet Setup
+          </h2>
+
+          <div class="space-y-3 text-xs">
+            <!-- Focus Number / Table Option -->
+            <div>
+              <label class="block font-bold text-slate-500 uppercase tracking-wider mb-1">Target Focus</label>
+              <select id="print-focus-number" onchange="generateWorksheet()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-semibold text-slate-800">
+                <option value="all">All Times Tables (0 – 10)</option>
+                <option value="10" selected>Only ×10 Facts</option>
+                <option value="9">Only ×9 Facts</option>
+                <option value="8">Only ×8 Facts</option>
+                <option value="7">Only ×7 Facts</option>
+                <option value="6">Only ×6 Facts</option>
+                <option value="5">Only ×5 Facts</option>
+                <option value="4">Only ×4 Facts</option>
+                <option value="3">Only ×3 Facts</option>
+                <option value="2">Only ×2 Facts</option>
+              </select>
+            </div>
+
+            <!-- Page Count / Questions Length -->
+            <div>
+              <label class="block font-bold text-slate-500 uppercase tracking-wider mb-1">Page & Question Count</label>
+              <select id="print-page-length" onchange="generateWorksheet()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-semibold text-slate-800">
+                <option value="1-20" selected>1 Page (20 Questions)</option>
+                <option value="2-40">2 Pages (40 Questions)</option>
+                <option value="3-60">3 Pages (60 Questions)</option>
+              </select>
+            </div>
+
+            <!-- Smart Layout Format -->
+            <div>
+              <label class="block font-bold text-slate-500 uppercase tracking-wider mb-1">Worksheet Layout Style</label>
+              <select id="print-style-format" onchange="generateWorksheet()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 font-semibold text-slate-800">
+                <option value="standard">Standard Multiplication (A × B = ___)</option>
+                <option value="missing">Mixed Missing Factors (___ × B = C)</option>
+                <option value="challenge">Mixed Standard + Word Problem Section</option>
+              </select>
+            </div>
+
+            <div class="pt-2 border-t border-slate-200 space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="print-include-answers" checked onchange="generateWorksheet()" class="rounded bg-slate-100 border-slate-300 text-amber-500 focus:ring-0">
+                <span class="text-slate-700 font-semibold">Include Answer Key Page</span>
+              </label>
+
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="print-bh-header" checked onchange="generateWorksheet()" class="rounded bg-slate-100 border-slate-300 text-amber-500 focus:ring-0">
+                <span class="text-slate-700 font-semibold">Include ב"ה Header Top Right</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="triggerPrint()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-base shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2 mt-4">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Print Straight Worksheet
+        </button>
+      </div>
+
+      <!-- Live Printable Pages Preview Container -->
+      <div class="flex-1 bg-slate-200/80 rounded-2xl border border-slate-300 p-3 sm:p-6 overflow-y-auto flex flex-col items-center gap-6">
+        <div id="worksheet-pages-render-target" class="w-full flex flex-col items-center gap-6">
+          <!-- Dynamic Multi-Page Worksheets Rendered Here -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Remote Sync Pairing Modal -->
+  <div id="remote-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 max-w-sm w-full shadow-2xl relative text-center">
+      <button onclick="closeRemoteModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-lg">✕</button>
+      
+      <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-3 font-bold text-2xl shadow-sm">
+        📱
+      </div>
+      <h3 class="font-display text-xl font-bold text-slate-900">Teacher Mobile Remote</h3>
+      <p class="text-xs text-slate-500 mt-1 mb-4">Control the classroom board from anywhere in the room using a smartphone.</p>
+
+      <!-- PIN Display -->
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 mb-4">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Room Access PIN</span>
+        <div id="remote-pin-display" class="font-display text-4xl font-extrabold text-amber-600 tracking-widest my-1">
+          ----
+        </div>
+        <p class="text-[11px] text-slate-500 mt-2">Enter this 4-digit PIN on the teacher remote device.</p>
+      </div>
+
+      <div class="space-y-2">
+        <button onclick="copyRemoteLink()" class="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition">
+          Copy Direct Remote Link
+        </button>
+        <button onclick="connectAsTeacherPrompt()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-300 transition">
+          Connect this device as Remote
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dedicated Mobile Remote Screen -->
+  <div id="teacher-remote-screen" class="fixed inset-0 bg-slate-50 z-50 flex flex-col hidden p-4 overflow-y-auto">
+    <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-3">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+        <span class="font-display font-bold text-sm text-slate-800">Teacher Remote Mode</span>
+      </div>
+      <button onclick="disconnectRemote()" class="px-3 py-1 rounded-lg bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200">
+        Exit Remote
+      </button>
+    </div>
+
+    <div class="flex gap-2 mb-3 bg-slate-200/80 p-1 rounded-xl border border-slate-300">
+      <button onclick="setRemoteViewMode('keypad')" id="remote-tab-keypad" class="flex-1 py-2 rounded-lg text-xs font-bold bg-white text-amber-700 shadow-sm">
+        Live Keypad
+      </button>
+      <button onclick="setRemoteViewMode('grid')" id="remote-tab-grid" class="flex-1 py-2 rounded-lg text-xs font-bold text-slate-600">
+        Map Inspector
+      </button>
+    </div>
+
+    <div id="remote-view-keypad" class="flex-1 flex flex-col justify-between">
+      <div class="bg-white rounded-xl p-4 border border-slate-200 text-center shadow-sm">
+        <span class="text-xs font-bold text-slate-500 block mb-1">Board Keypad Display</span>
+        <div id="remote-keypad-preview" class="font-display text-4xl font-extrabold text-amber-600 tracking-wider">
+          --
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3 my-auto max-w-xs mx-auto w-full">
+        <button onclick="sendRemoteKey('1')" class="h-16 rounded-2xl bg-white active:bg-amber-100 font-display text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm">1</button>
+        <button onclick="sendRemoteKey('2')" class="h-16 rounded-2xl bg-white active:bg-amber-100 font-display text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm">2</button>
+        <button onclick="sendRemoteKey('3')" class="h-16 rounded-2xl bg-white active:bg-amber-100 font-display text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm">3</button>
+        <button onclick="sendRemoteKey('4')" class="h-16 rounded-2xl bg-white active:bg-amber-100 font-display text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm">4</button>
+        <button onclick="sendRemoteKey('5')" class="h-16 rounded-2xl bg-white active:bg-amber-100 font-display text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm">5</button>
+        <button onclick="sendRemoteKey('6')" class="h-16 rounded-2xl bg-white active:bg-amber-100 font-display text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm">6</button>
+        <button onclick="sendRemoteKey('7')" class="h-16 rounded-2xl bg-white active:bg-amber-100 font-display text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm">7</button>
+        <button onclick="sendRemoteKey('8')" class="h-16 rounded-2xl bg-white active:bg-amber-100 font-display text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm">8</button>
+        <button onclick="sendRemoteKey('9')" class="h-16 rounded-2xl bg-white active:bg-amber-100 font-display text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm">9</button>
+        <button onclick="sendRemoteKey('back')" class="h-16 rounded-2xl bg-rose-50 active:bg-rose-100 font-display text-xl font-bold text-rose-700 border border-rose-200">⌫</button>
+        <button onclick="sendRemoteKey('0')" class="h-16 rounded-2xl bg-white active:bg-amber-100 font-display text-2xl font-bold text-slate-800 border border-slate-300 shadow-sm">0</button>
+        <button onclick="sendRemoteKey('submit')" class="h-16 rounded-2xl bg-emerald-500 active:bg-emerald-600 text-white font-display text-2xl font-bold shadow-md">✓</button>
+      </div>
+    </div>
+
+    <div id="remote-view-grid" class="flex-1 hidden flex flex-col justify-between">
+      <div class="text-xs text-slate-500 text-center mb-2">Tap any cell to remotely cycle mastery status.</div>
+      <div id="remote-grid-container" class="flex-1 grid grid-cols-12 gap-1 p-2 bg-white rounded-xl border border-slate-200 overflow-auto">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STATE_KEY = 'lab_10_times_table_v4';
+    
+    let appState = {
+      soundEnabled: true,
+      currentTab: 'map',
+      // 11x11 facts grid (0..10) x (0..10). States: 0=Gray, 1=Yellow, 2=Orange, 3=Green
+      grid: Array(11).fill(0).map(() => Array(11).fill(0)),
+      
+      roomPin: null,
+      peer: null,
+      conn: null,
+      isRemote: false,
+
+      practice: {
+        pool: 'all',
+        range: '0-10',
+        total: 10,
+        currentIndex: 0,
+        questions: [],
+        currentInput: '',
+        correctCount: 0,
+        wrongCount: 0,
+        streak: 0
+      },
+
+      tips: {
+        lessonIndex: 0,
+        stepIndex: 0
+      }
+    };
+
+    function loadSavedState() {
+      try {
+        const saved = localStorage.getItem(STATE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.grid) appState.grid = parsed.grid;
+          if (parsed.soundEnabled !== undefined) appState.soundEnabled = parsed.soundEnabled;
+        }
+      } catch (e) {
+        console.error('Failed to load state:', e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STATE_KEY, JSON.stringify({
+          grid: appState.grid,
+          soundEnabled: appState.soundEnabled
+        }));
+      } catch (e) {
+        console.error('Failed to save state:', e);
+      }
+    }
+
+    // Audio Context Synthesizer
+    let audioCtx = null;
+    function playSound(type) {
+      if (!appState.soundEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(520, now);
+          osc.frequency.exponentialRampToValueAtTime(800, now + 0.04);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+          osc.start(now);
+          osc.stop(now + 0.04);
+        } else if (type === 'correct') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.08);
+          osc.frequency.setValueAtTime(783.99, now + 0.16);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.setValueAtTime(175, now + 0.1);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        } else if (type === 'upgrade') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(350, now);
+          osc.frequency.exponentialRampToValueAtTime(700, now + 0.12);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        }
+      } catch (e) {}
+    }
+
+    function switchTab(tabId) {
+      playSound('click');
+      appState.currentTab = tabId;
+      
+      const tabs = ['map', 'tips', 'practice', 'print'];
+      tabs.forEach(t => {
+        const viewEl = document.getElementById(`view-${t}`);
+        const btnEl = document.getElementById(`tab-${t}`);
+        if (t === tabId) {
+          viewEl.classList.remove('hidden');
+          btnEl.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap bg-white text-amber-600 shadow-sm border border-slate-200';
+        } else {
+          viewEl.classList.add('hidden');
+          btnEl.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 whitespace-nowrap';
+        }
+      });
+
+      if (tabId === 'practice' && appState.practice.questions.length === 0) {
+        startPracticeSession();
+      } else if (tabId === 'print') {
+        generateWorksheet();
+      }
+    }
+
+    function toggleSound() {
+      appState.soundEnabled = !appState.soundEnabled;
+      saveState();
+      document.getElementById('sound-icon-on').classList.toggle('hidden', !appState.soundEnabled);
+      document.getElementById('sound-icon-off').classList.toggle('hidden', appState.soundEnabled);
+    }
+
+    function toggleFullscreen() {
+      playSound('click');
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    function renderMapGrid() {
+      const container = document.getElementById('grid-cells-container');
+      container.innerHTML = '';
+
+      for (let r = 0; r <= 11; r++) {
+        for (let c = 0; c <= 11; c++) {
+          const cell = document.createElement('div');
+          
+          if (r === 0 && c === 0) {
+            cell.className = 'flex items-center justify-center font-display text-lg font-bold text-amber-600 bg-amber-50 rounded-xl border border-amber-200 shadow-sm min-h-[38px]';
+            cell.innerText = '×';
+          } 
+          else if (r === 0 && c > 0) {
+            const colNum = c - 1;
+            cell.className = 'flex items-center justify-center font-display text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-300 cursor-pointer transition active:scale-95 shadow-sm min-h-[38px]';
+            cell.innerText = colNum;
+            cell.title = `Cycle Column ${colNum}`;
+            cell.onclick = () => handleColHeaderClick(colNum);
+          } 
+          else if (c === 0 && r > 0) {
+            const rowNum = r - 1;
+            cell.className = 'flex items-center justify-center font-display text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-300 cursor-pointer transition active:scale-95 shadow-sm min-h-[38px]';
+            cell.innerText = rowNum;
+            cell.title = `Cycle Row ${rowNum}`;
+            cell.onclick = () => handleRowHeaderClick(rowNum);
+          } 
+          else {
+            const rowFactor = r - 1;
+            const colFactor = c - 1;
+            const status = appState.grid[rowFactor][colFactor];
+            const answer = rowFactor * colFactor;
+
+            cell.id = `cell-${rowFactor}-${colFactor}`;
+            cell.onclick = () => handleFactCellClick(rowFactor, colFactor);
+
+            let statusClass = 'cell-gray';
+            if (status === 1) statusClass = 'cell-yellow';
+            else if (status === 2) statusClass = 'cell-orange';
+            else if (status === 3) statusClass = 'cell-green';
+
+            cell.className = `flex flex-col items-center justify-center rounded-xl cursor-pointer transition-all duration-200 select-none p-1 min-h-[38px] ${statusClass}`;
+            
+            cell.innerHTML = `
+              <span class="text-[9px] opacity-75 font-bold leading-none">${rowFactor}×${colFactor}</span>
+              <span class="font-display font-extrabold text-xs sm:text-sm leading-none mt-0.5">${status === 0 ? '?' : answer}</span>
+            `;
+          }
+
+          container.appendChild(cell);
+        }
+      }
+
+      updateMapSummaryStats();
+      if (appState.conn) sendRemoteGridSync();
+    }
+
+    function handleFactCellClick(r, c) {
+      playSound('upgrade');
+      appState.grid[r][c] = (appState.grid[r][c] + 1) % 4;
+      saveState();
+
+      const cell = document.getElementById(`cell-${r}-${c}`);
+      if (cell) {
+        cell.classList.add('cell-animating');
+        setTimeout(() => cell.classList.remove('cell-animating'), 350);
+      }
+
+      renderMapGrid();
+    }
+
+    function handleRowHeaderClick(r) {
+      const isAllGreen = appState.grid[r].every(s => s === 3);
+      playSound('upgrade');
+
+      for (let c = 0; c <= 10; c++) {
+        appState.grid[r][c] = isAllGreen ? 0 : (appState.grid[r][c] + 1) % 4;
+      }
+      saveState();
+      renderMapGrid();
+    }
+
+    function handleColHeaderClick(c) {
+      let isAllGreen = true;
+      for (let r = 0; r <= 10; r++) {
+        if (appState.grid[r][c] !== 3) isAllGreen = false;
+      }
+      playSound('upgrade');
+
+      for (let r = 0; r <= 10; r++) {
+        appState.grid[r][c] = isAllGreen ? 0 : (appState.grid[r][c] + 1) % 4;
+      }
+      saveState();
+      renderMapGrid();
+    }
+
+    function resetMapGrid() {
+      if (confirm('Are you sure you want to reset all grid mastery status?')) {
+        appState.grid = Array(11).fill(0).map(() => Array(11).fill(0));
+        saveState();
+        renderMapGrid();
+      }
+    }
+
+    function updateMapSummaryStats() {
+      let gray = 0, yellow = 0, orange = 0, green = 0;
+      for (let r = 0; r <= 10; r++) {
+        for (let c = 0; c <= 10; c++) {
+          const s = appState.grid[r][c];
+          if (s === 0) gray++;
+          else if (s === 1) yellow++;
+          else if (s === 2) orange++;
+          else if (s === 3) green++;
+        }
+      }
+      const summaryEl = document.getElementById('map-stats-summary');
+      if (summaryEl) {
+        summaryEl.innerHTML = `
+          <span>Learned: <strong class="text-slate-800">${121 - gray}/121</strong></span>
+          <span class="text-slate-300">|</span>
+          <span>Mastered: <strong class="text-emerald-600">${green}</strong></span>
+        `;
+      }
+    }
+
+    const LESSONS_DATA = [
+      {
+        focusTitle: "Focus: Zero Property (×0 Facts)",
+        title: "The Zero Multiplier Rule",
+        takeaway: "Any number multiplied by 0 always equals 0.",
+        examples: ["2 × 0 = 0", "5 × 0 = 0", "10 × 0 = 0"],
+        steps: [
+          {
+            title: "Concept: Empty Groups",
+            render: () => `
+              <div class="flex flex-col items-center justify-center gap-4 text-center">
+                <p class="text-xs font-semibold text-slate-600 max-w-sm">When you multiply by 0, it means you have groups with NOTHING in them.</p>
+                <div class="flex gap-3">
+                  <div class="w-16 h-16 rounded-2xl bg-white border-2 border-dashed border-amber-300 flex flex-col items-center justify-center font-display text-[10px] text-slate-400 shadow-sm">
+                    Group 1
+                  </div>
+                  <div class="w-16 h-16 rounded-2xl bg-white border-2 border-dashed border-amber-300 flex flex-col items-center justify-center font-display text-[10px] text-slate-400 shadow-sm">
+                    Group 2
+                  </div>
+                  <div class="w-16 h-16 rounded-2xl bg-white border-2 border-dashed border-amber-300 flex flex-col items-center justify-center font-display text-[10px] text-slate-400 shadow-sm">
+                    Group 3
+                  </div>
+                </div>
+                <div class="font-display text-2xl font-extrabold text-amber-600">3 groups of 0 items = 0</div>
+              </div>
+            `
+          },
+          {
+            title: "Demonstration: Multiplier Rule",
+            render: () => `
+              <div class="flex flex-col items-center gap-3">
+                <div class="flex items-center gap-3 font-display text-3xl sm:text-4xl font-extrabold">
+                  <span class="px-4 py-2 bg-amber-100 border border-amber-300 text-amber-900 rounded-xl">99</span>
+                  <span class="text-slate-400">× 0 =</span>
+                  <span class="px-5 py-2 bg-rose-500 text-white rounded-xl shadow-md">0</span>
+                </div>
+                <p class="text-xs font-semibold text-slate-500 mt-2">Even huge numbers instantly become 0!</p>
+              </div>
+            `
+          }
+        ]
+      },
+      {
+        focusTitle: "Focus: Identity Rule (×1 Facts)",
+        title: "The Mirror Multiplier Rule",
+        takeaway: "Any number multiplied by 1 stays exactly the same.",
+        examples: ["3 × 1 = 3", "7 × 1 = 7", "10 × 1 = 10"],
+        steps: [
+          {
+            title: "Concept: One Single Group",
+            render: () => `
+              <div class="flex flex-col items-center justify-center gap-4 text-center">
+                <p class="text-xs font-semibold text-slate-600 max-w-sm">Multiplying by 1 just keeps the group as it is.</p>
+                <div class="w-40 h-24 rounded-2xl bg-white border-2 border-amber-400 flex items-center justify-center gap-3 p-3 shadow-md">
+                  <span class="w-7 h-7 rounded-full bg-amber-400 flex items-center justify-center font-bold text-white shadow-sm text-xs">★</span>
+                  <span class="w-7 h-7 rounded-full bg-amber-400 flex items-center justify-center font-bold text-white shadow-sm text-xs">★</span>
+                  <span class="w-7 h-7 rounded-full bg-amber-400 flex items-center justify-center font-bold text-white shadow-sm text-xs">★</span>
+                </div>
+                <div class="font-display text-2xl font-extrabold text-amber-600">1 group of 3 = 3</div>
+              </div>
+            `
+          }
+        ]
+      },
+      {
+        focusTitle: "Focus: The Power of Ten (×10 Facts)",
+        title: "The Magic Zero-Shift Rule",
+        takeaway: "Multiplying by 10 shifts digits to the left and attaches a zero in ones place.",
+        examples: ["4 × 10 = 40", "7 × 10 = 70", "10 × 10 = 100"],
+        steps: [
+          {
+            title: "Step 1: The Digit Slide",
+            render: () => `
+              <div class="flex flex-col items-center justify-center gap-4">
+                <p class="text-xs font-semibold text-slate-600 text-center max-w-md">Watch how the number 7 slides into the Tens place when multiplied by 10:</p>
+                <div class="flex items-center gap-3 font-display text-3xl sm:text-4xl font-extrabold">
+                  <div class="p-3 sm:p-4 bg-white border border-slate-300 rounded-2xl text-slate-800 shadow-sm">7</div>
+                  <span class="text-slate-400">× 10 =</span>
+                  <div class="p-3 sm:p-4 bg-amber-400 text-white rounded-2xl shadow-md animate-bounce">7</div>
+                  <div class="p-3 sm:p-4 bg-emerald-500 text-white rounded-2xl shadow-md">0</div>
+                </div>
+                <p class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">7 Tens + 0 Ones = 70</p>
+              </div>
+            `
+          },
+          {
+            title: "Step 2: Instant Mental Math Pattern",
+            render: () => `
+              <div class="grid grid-cols-3 gap-3 text-center font-display text-sm">
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <span class="text-slate-500 block text-[10px]">3 × 10</span>
+                  <span class="text-xl font-bold text-amber-800">30</span>
+                </div>
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <span class="text-slate-500 block text-[10px]">8 × 10</span>
+                  <span class="text-xl font-bold text-amber-800">80</span>
+                </div>
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <span class="text-slate-500 block text-[10px]">10 × 10</span>
+                  <span class="text-xl font-bold text-amber-800">100</span>
+                </div>
+              </div>
+            `
+          }
+        ]
+      },
+      {
+        focusTitle: "Focus: Doubling Strategy (×2 Facts)",
+        title: "Double the Number Rule",
+        takeaway: "Multiplying by 2 is identical to adding the number to itself.",
+        examples: ["4 × 2 = 8", "6 × 2 = 12", "9 × 2 = 18"],
+        steps: [
+          {
+            title: "Step 1: Addition Equivalence",
+            render: () => `
+              <div class="flex items-center gap-3 font-display text-2xl sm:text-3xl font-bold">
+                <div class="px-4 py-3 bg-white rounded-2xl border border-slate-300 text-amber-600 shadow-sm">6</div>
+                <span class="text-slate-400">+</span>
+                <div class="px-4 py-3 bg-white rounded-2xl border border-slate-300 text-amber-600 shadow-sm">6</div>
+                <span class="text-slate-400">=</span>
+                <div class="px-5 py-3 bg-emerald-500 text-white rounded-2xl shadow-md">12</div>
+              </div>
+            `
+          }
+        ]
+      },
+      {
+        focusTitle: "Focus: Double and Double Again (×4 Facts)",
+        title: "Double-Double Method",
+        takeaway: "To multiply by 4, double the number, then double that result!",
+        examples: ["3 × 4 = 12", "7 × 4 = 28", "8 × 4 = 32"],
+        steps: [
+          {
+            title: "Step 1: First Double",
+            render: () => `
+              <div class="flex items-center gap-3 font-display text-xl font-bold">
+                <span class="text-slate-600">Start with 7</span>
+                <span class="text-amber-500">→ Double →</span>
+                <span class="px-4 py-2 bg-amber-100 text-amber-900 border border-amber-300 rounded-xl">14</span>
+              </div>
+            `
+          },
+          {
+            title: "Step 2: Second Double",
+            render: () => `
+              <div class="flex items-center gap-3 font-display text-xl font-bold">
+                <span class="px-4 py-2 bg-amber-100 text-amber-900 border border-amber-300 rounded-xl">14</span>
+                <span class="text-emerald-500">→ Double Again →</span>
+                <span class="px-5 py-2 bg-emerald-500 text-white rounded-xl shadow-md">28</span>
+              </div>
+            `
+          }
+        ]
+      },
+      {
+        focusTitle: "Focus: Ten Minus One Group (×9 Facts)",
+        title: "The ×10 Minus One Strategy",
+        takeaway: "Multiply by 10 first, then subtract 1 group of the number.",
+        examples: ["7 × 9 = 70 − 7 = 63", "8 × 9 = 80 − 8 = 72"],
+        steps: [
+          {
+            title: "Step 1: Multiply by 10",
+            render: () => `
+              <div class="font-display text-center">
+                <p class="text-xs text-slate-500 mb-2">Want to solve 7 × 9?</p>
+                <div class="text-2xl font-bold text-slate-800">7 × 10 = <span class="text-amber-600">70</span></div>
+              </div>
+            `
+          },
+          {
+            title: "Step 2: Subtract 1 Group",
+            render: () => `
+              <div class="font-display text-center">
+                <p class="text-xs text-slate-500 mb-2">Now subtract 7 from 70:</p>
+                <div class="text-3xl font-extrabold text-emerald-600">70 − 7 = 63</div>
+              </div>
+            `
+          }
+        ]
+      },
+      {
+        focusTitle: "Focus: Digit Pattern Magic (×9 Finger/Sum Trick)",
+        title: "The 9s Digit Sum Secret",
+        takeaway: "Tens digit goes UP (+1), Ones digit goes DOWN (-1). Sum is always 9!",
+        examples: ["1 × 9 = 09", "4 × 9 = 36", "9 × 9 = 81"],
+        steps: [
+          {
+            title: "Step 1: Watch the Digit Sums",
+            render: () => `
+              <div class="w-full max-w-sm bg-white rounded-xl p-3 border border-slate-200 text-xs font-mono shadow-sm">
+                <div class="grid grid-cols-3 gap-2 font-bold text-center border-b border-slate-200 pb-1 mb-1 text-slate-500">
+                  <span>Fact</span>
+                  <span>Ans</span>
+                  <span>Sum</span>
+                </div>
+                <div class="space-y-1">
+                  <div class="flex justify-between px-2 py-0.5 rounded bg-amber-50 text-amber-900 font-bold">
+                    <span>2 × 9</span><span>18</span><span>1 + 8 = 9</span>
+                  </div>
+                  <div class="flex justify-between px-2 py-0.5 rounded text-slate-700">
+                    <span>5 × 9</span><span>45</span><span>4 + 5 = 9</span>
+                  </div>
+                  <div class="flex justify-between px-2 py-0.5 rounded bg-emerald-50 text-emerald-900 font-bold">
+                    <span>8 × 9</span><span>72</span><span>7 + 2 = 9</span>
+                  </div>
+                </div>
+              </div>
+            `
+          }
+        ]
+      },
+      {
+        focusTitle: "Focus: Sefirat HaOmer Anchor (7 × 7 = 49)",
+        title: "The Omer Weeks Memory Anchor",
+        takeaway: "7 Weeks = 49 Days of Sefirat HaOmer (7 × 7 = 49).",
+        examples: ["7 × 7 = 49"],
+        steps: [
+          {
+            title: "Memory Connection",
+            render: () => `
+              <div class="flex flex-col items-center gap-3 text-center">
+                <div class="p-3 rounded-2xl bg-amber-100/80 border border-amber-300 shadow-sm max-w-xs">
+                  <span class="text-xs font-bold uppercase text-amber-800 tracking-wider block mb-1">Mnemonic</span>
+                  <p class="text-xs font-semibold text-slate-700">7 Weeks = 49 Days of Sefirat HaOmer</p>
+                </div>
+                <div class="font-display text-4xl sm:text-5xl font-extrabold text-amber-600">7 × 7 = 49</div>
+              </div>
+            `
+          }
+        ]
+      },
+      {
+        focusTitle: "Focus: Rhyme Memory Anchor (8 × 8 = 64)",
+        title: "The Rhyme Anchor Rule",
+        takeaway: "8 × 8 = 64 ('I ate and ate and was sick on the floor').",
+        examples: ["8 × 8 = 64"],
+        steps: [
+          {
+            title: "Fun Rhyme Trick",
+            render: () => `
+              <div class="flex flex-col items-center gap-3 text-center">
+                <div class="font-display text-xl font-bold text-orange-600 italic">"I ate and ate and was sick on the floor!"</div>
+                <div class="font-display text-4xl sm:text-5xl font-extrabold text-emerald-600">8 × 8 = 64</div>
+              </div>
+            `
+          }
+        ]
+      },
+      {
+        focusTitle: "Focus: Sequential Digits 5, 6, 7, 8 (7 × 8 = 56)",
+        title: "The Counting Sequence Secret",
+        takeaway: "Notice the counting numbers 5, 6, 7, 8 → 56 = 7 × 8!",
+        examples: ["56 = 7 × 8"],
+        steps: [
+          {
+            title: "Sequence Trick",
+            render: () => `
+              <div class="flex flex-col items-center gap-3 text-center">
+                <div class="flex gap-2 sm:gap-3 font-display text-2xl sm:text-4xl font-extrabold">
+                  <span class="px-3 py-1 bg-white text-amber-600 border rounded-xl shadow-sm">5</span>
+                  <span class="px-3 py-1 bg-white text-amber-600 border rounded-xl shadow-sm">6</span>
+                  <span class="text-slate-400">=</span>
+                  <span class="px-3 py-1 bg-white text-emerald-600 border rounded-xl shadow-sm">7</span>
+                  <span class="text-slate-400">×</span>
+                  <span class="px-3 py-1 bg-white text-emerald-600 border rounded-xl shadow-sm">8</span>
+                </div>
+                <div class="font-display text-2xl font-extrabold text-emerald-600 mt-2">56 = 7 × 8</div>
+              </div>
+            `
+          }
+        ]
+      }
+    ];
+
+    function renderLessonsButtons() {
+      const listContainer = document.getElementById('lesson-buttons-list');
+      listContainer.innerHTML = '';
+
+      LESSONS_DATA.forEach((lesson, index) => {
+        const btn = document.createElement('button');
+        btn.onclick = () => selectLesson(index);
+        
+        const isActive = appState.tips.lessonIndex === index;
+        btn.className = isActive 
+          ? 'px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-amber-500 text-white shadow-sm border border-amber-600'
+          : 'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap bg-white text-slate-600 hover:text-slate-900 border border-slate-200';
+        btn.innerText = `${index + 1}. ${lesson.title.split(' ')[0]}`;
+        listContainer.appendChild(btn);
+      });
+    }
+
+    function selectLesson(index) {
+      playSound('click');
+      appState.tips.lessonIndex = index;
+      appState.tips.stepIndex = 0;
+      updateLessonStage();
+      renderLessonsButtons();
+    }
+
+    function prevStepInTip() {
+      if (appState.tips.stepIndex > 0) {
+        playSound('click');
+        appState.tips.stepIndex--;
+        updateLessonStage();
+      }
+    }
+
+    function nextStepInTip() {
+      const lesson = LESSONS_DATA[appState.tips.lessonIndex];
+      if (appState.tips.stepIndex < lesson.steps.length - 1) {
+        playSound('click');
+        appState.tips.stepIndex++;
+        updateLessonStage();
+      }
+    }
+
+    function updateLessonStage() {
+      const lesson = LESSONS_DATA[appState.tips.lessonIndex];
+      const step = lesson.steps[appState.tips.stepIndex];
+
+      document.getElementById('lesson-focus-tag').innerText = lesson.focusTitle;
+      document.getElementById('lesson-title').innerText = `${lesson.title} — ${step.title}`;
+      document.getElementById('lesson-takeaway').innerText = lesson.takeaway;
+      document.getElementById('lesson-step-counter').innerText = `Step ${appState.tips.stepIndex + 1} of ${lesson.steps.length}`;
+
+      document.getElementById('btn-prev-step').disabled = (appState.tips.stepIndex === 0);
+      document.getElementById('btn-next-step').disabled = (appState.tips.stepIndex === lesson.steps.length - 1);
+
+      const exContainer = document.getElementById('lesson-examples-pills');
+      exContainer.innerHTML = lesson.examples.map(ex => 
+        `<span class="px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700 font-mono text-xs font-bold shadow-sm">${ex}</span>`
+      ).join('');
+
+      const stage = document.getElementById('lesson-visual-stage');
+      stage.className = 'flex-1 my-3 flex flex-col items-center justify-center relative rounded-xl bg-slate-50 border border-slate-200 p-4 sm:p-6 min-h-[240px] step-fade-in';
+      stage.innerHTML = step.render();
+    }
+
+    function startPracticeSession() {
+      playSound('click');
+      const p = appState.practice;
+      p.currentIndex = 0;
+      p.correctCount = 0;
+      p.wrongCount = 0;
+      p.streak = 0;
+      p.currentInput = '';
+      
+      const poolFacts = [];
+      const rangeParts = p.range.split('-');
+      const minFactor = parseInt(rangeParts[0], 10);
+      const maxFactor = parseInt(rangeParts[1], 10);
+
+      for (let r = 0; r <= 10; r++) {
+        for (let c = minFactor; c <= maxFactor; c++) {
+          const status = appState.grid[r][c];
+          let include = false;
+          
+          if (p.pool === 'all') include = true;
+          else if (p.pool === 'yellow' && status === 1) include = true;
+          else if (p.pool === 'orange' && status === 2) include = true;
+          else if (p.pool === 'green' && status === 3) include = true;
+
+          if (include) {
+            poolFacts.push({ r, c, answer: r * c });
+          }
+        }
+      }
+
+      poolFacts.sort(() => Math.random() - 0.5);
+      
+      if (poolFacts.length === 0) {
+        for (let r = 0; r <= 10; r++) {
+          poolFacts.push({ r, c: 10, answer: r * 10 });
+        }
+      }
+
+      p.questions = poolFacts.slice(0, p.total);
+      updatePracticeDisplay();
+    }
+
+    function updatePracticeDisplay() {
+      const p = appState.practice;
+      
+      document.getElementById('practice-progress-bar').style.width = `${(p.currentIndex / p.questions.length) * 100}%`;
+      document.getElementById('practice-progress-text').innerText = `${p.currentIndex} / ${p.questions.length}`;
+      document.getElementById('practice-score-correct').innerText = p.correctCount;
+      document.getElementById('practice-score-wrong').innerText = p.wrongCount;
+
+      const streakTag = document.getElementById('practice-streak-tag');
+      if (p.streak > 1) {
+        streakTag.classList.remove('hidden');
+        document.getElementById('practice-streak-count').innerText = p.streak;
+      } else {
+        streakTag.classList.add('hidden');
+      }
+
+      if (p.currentIndex < p.questions.length) {
+        const q = p.questions[p.currentIndex];
+        document.getElementById('practice-question-text').innerText = `${q.r} × ${q.c} = ?`;
+      } else {
+        document.getElementById('practice-question-text').innerText = `Session Complete! 🎉`;
+      }
+
+      document.getElementById('practice-input-value').innerText = p.currentInput;
+      if (appState.conn) sendRemoteKeypadPreview(p.currentInput);
+    }
+
+    function pressKey(key) {
+      playSound('click');
+      const p = appState.practice;
+      if (p.currentIndex >= p.questions.length) return;
+
+      if (key === 'back') {
+        p.currentInput = p.currentInput.slice(0, -1);
+      } else if (key === 'submit') {
+        submitAnswer();
+        return;
+      } else {
+        if (p.currentInput.length < 3) {
+          p.currentInput += key;
+        }
+      }
+      updatePracticeDisplay();
+    }
+
+    function submitAnswer() {
+      const p = appState.practice;
+      if (p.currentInput.trim() === '') return;
+
+      const q = p.questions[p.currentIndex];
+      const entered = parseInt(p.currentInput, 10);
+
+      const box = document.getElementById('practice-input-box');
+
+      if (entered === q.answer) {
+        playSound('correct');
+        p.correctCount++;
+        p.streak++;
+        
+        if (appState.grid[q.r][q.c] < 3) {
+          appState.grid[q.r][q.c] += 1;
+          saveState();
+        }
+
+        box.classList.add('border-emerald-500', 'bg-emerald-50');
+        setTimeout(() => {
+          box.classList.remove('border-emerald-500', 'bg-emerald-50');
+          p.currentIndex++;
+          p.currentInput = '';
+          updatePracticeDisplay();
+        }, 350);
+
+      } else {
+        playSound('wrong');
+        p.wrongCount++;
+        p.streak = 0;
+        
+        box.classList.add('border-rose-500', 'bg-rose-50', 'animate-shake');
+        setTimeout(() => {
+          box.classList.remove('border-rose-500', 'bg-rose-50', 'animate-shake');
+          p.currentInput = '';
+          updatePracticeDisplay();
+        }, 450);
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (appState.currentTab !== 'practice' && !appState.isRemote) return;
+      if (e.key >= '0' && e.key <= '9') {
+        pressKey(e.key);
+      } else if (e.key === 'Backspace') {
+        pressKey('back');
+      } else if (e.key === 'Enter') {
+        pressKey('submit');
+      }
+    });
+
+    function setPracticePool(pool) {
+      appState.practice.pool = pool;
+      ['all', 'yellow', 'orange', 'green'].forEach(p => {
+        const btn = document.getElementById(`pool-${p}`);
+        if (p === pool) btn.className = 'p-2 rounded-lg bg-amber-100 text-amber-900 font-bold border border-amber-300 text-left';
+        else btn.className = 'p-2 rounded-lg bg-slate-100 text-slate-600 font-semibold border border-slate-200 text-left';
+      });
+      startPracticeSession();
+    }
+
+    function setPracticeCount(cnt) {
+      appState.practice.total = cnt;
+      [10, 20, 30].forEach(c => {
+        const btn = document.getElementById(`count-${c}`);
+        if (c === cnt) btn.className = 'flex-1 py-1.5 rounded-lg bg-amber-100 text-amber-900 font-bold border border-amber-300 text-xs';
+        else btn.className = 'flex-1 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-semibold border border-slate-200 text-xs';
+      });
+      startPracticeSession();
+    }
+
+    function updatePracticeSettings() {
+      appState.practice.range = document.getElementById('practice-range').value;
+      startPracticeSession();
+    }
+
+    function generateWorksheet() {
+      const renderTarget = document.getElementById('worksheet-pages-render-target');
+      renderTarget.innerHTML = '';
+
+      const focusOption = document.getElementById('print-focus-number').value;
+      const pageLengthVal = document.getElementById('print-page-length').value;
+      const styleFormat = document.getElementById('print-style-format').value;
+      const includeAnswers = document.getElementById('print-include-answers').checked;
+      const includeBH = document.getElementById('print-bh-header').checked;
+
+      const [numPages, totalQuestions] = pageLengthVal.split('-').map(Number);
+      const questionsPerPage = Math.ceil(totalQuestions / numPages);
+
+      // Generate pool of facts
+      let pool = [];
+      for (let r = 0; r <= 10; r++) {
+        for (let c = 0; c <= 10; c++) {
+          if (focusOption === 'all' || r === parseInt(focusOption, 10) || c === parseInt(focusOption, 10)) {
+            pool.push({ r, c, ans: r * c });
+          }
+        }
+      }
+
+      // Shuffle pool
+      pool.sort(() => Math.random() - 0.5);
+      
+      // Expand pool if total questions exceed unique facts
+      while (pool.length < totalQuestions) {
+        pool = pool.concat([...pool].sort(() => Math.random() - 0.5));
+      }
+
+      const selectedQuestions = pool.slice(0, totalQuestions);
+
+      // Render main worksheet pages
+      for (let page = 0; page < numPages; page++) {
+        const pageQs = selectedQuestions.slice(page * questionsPerPage, (page + 1) * questionsPerPage);
+        const pageEl = createPrintPageElement({
+          pageNumber: page + 1,
+          totalPages: numPages,
+          questions: pageQs,
+          styleFormat,
+          includeBH,
+          isAnswerKey: false
+        });
+        renderTarget.appendChild(pageEl);
+      }
+
+      // Render Answer Key pages if enabled
+      if (includeAnswers) {
+        for (let page = 0; page < numPages; page++) {
+          const pageQs = selectedQuestions.slice(page * questionsPerPage, (page + 1) * questionsPerPage);
+          const keyEl = createPrintPageElement({
+            pageNumber: page + 1,
+            totalPages: numPages,
+            questions: pageQs,
+            styleFormat,
+            includeBH,
+            isAnswerKey: true
+          });
+          renderTarget.appendChild(keyEl);
+        }
+      }
+    }
+
+    function createPrintPageElement({ pageNumber, totalPages, questions, styleFormat, includeBH, isAnswerKey }) {
+      const pageDiv = document.createElement('div');
+      pageDiv.className = 'print-page w-full max-w-[8.5in] min-h-[10.5in] bg-white text-slate-900 p-8 rounded-xl shadow-lg border border-slate-200 flex flex-col justify-between font-serif my-auto';
+
+      // Header with ב"ה Top Right
+      const headerHtml = `
+        <div class="flex items-start justify-between border-b-2 border-slate-900 pb-3 mb-6">
+          <div>
+            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-sans">
+              10 Times Table Lab ${isAnswerKey ? '— Official Answer Key' : '— Practice Sheet'}
+            </h1>
+            <p class="text-xs text-slate-600 font-sans mt-0.5">
+              ${isAnswerKey ? 'Teacher Reference Sheet' : 'Focus Multiplication & Fact Mastery Worksheet'}
+            </p>
+          </div>
+          <div class="text-right font-sans text-xs space-y-1">
+            ${includeBH ? `<div class="font-hebrew font-bold text-sm text-slate-900 tracking-wider">ב"ה</div>` : ''}
+            <div>Name: <span class="inline-block w-36 border-b border-slate-800"></span></div>
+            <div>Date: <span class="inline-block w-28 border-b border-slate-800"></span></div>
+            <div>Score: <span class="inline-block w-16 border-b border-slate-800"></span> / ${questions.length}</div>
+          </div>
+        </div>
+      `;
+
+      // Questions Grid
+      let questionsHtml = `<div class="grid grid-cols-2 gap-x-12 gap-y-6 font-mono text-base pt-2">`;
+      
+      questions.forEach((q, idx) => {
+        const qNum = (pageNumber - 1) * questions.length + idx + 1;
+        
+        if (isAnswerKey) {
+          questionsHtml += `
+            <div class="flex items-center justify-between border-b border-slate-200 pb-2 text-sm font-semibold">
+              <span>${qNum}) &nbsp; ${q.r} × ${q.c} =</span>
+              <span class="font-bold text-emerald-800 text-base">${q.ans}</span>
+            </div>
+          `;
+        } else {
+          if (styleFormat === 'missing' && idx % 2 === 1) {
+            questionsHtml += `
+              <div class="flex items-center justify-between border-b border-slate-300 pb-2 text-base font-bold">
+                <span>${qNum}) &nbsp; <span class="inline-block w-10 border-b-2 border-slate-800 border-dotted text-center"></span> × ${q.c} = ${q.ans}</span>
+              </div>
+            `;
+          } else {
+            questionsHtml += `
+              <div class="flex items-center justify-between border-b border-slate-300 pb-2 text-base font-bold">
+                <span>${qNum}) &nbsp; ${q.r} × ${q.c} =</span>
+                <span class="inline-block w-20 border-b-2 border-slate-800 border-dotted"></span>
+              </div>
+            `;
+          }
+        }
+      });
+      questionsHtml += `</div>`;
+
+      // Optional Math Word Problem Section if challenge mode enabled
+      let challengeHtml = '';
+      if (styleFormat === 'challenge' && !isAnswerKey) {
+        challengeHtml = `
+          <div class="mt-8 pt-4 border-t-2 border-dashed border-slate-300 font-sans">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">★ Word Problem Challenge</h3>
+            <p class="text-sm font-medium text-slate-800 leading-relaxed">
+              David saved 10 coins in his piggy bank every single week for 7 weeks. How many total coins did David save in all?
+            </p>
+            <div class="mt-4 flex items-center justify-between text-xs font-mono font-bold">
+              <span>Show Equation: _________________________</span>
+              <span>Answer: ____________ coins</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // Footer
+      const footerHtml = `
+        <div class="border-t border-slate-300 pt-3 flex justify-between items-center text-[10px] text-slate-500 font-sans uppercase tracking-wider">
+          <span>10 Times Table Lab — Classroom Edition</span>
+          <span>Page ${pageNumber} of ${totalPages} ${isAnswerKey ? '(Answer Key)' : ''}</span>
+        </div>
+      `;
+
+      pageDiv.innerHTML = `
+        <div>
+          ${headerHtml}
+          ${questionsHtml}
+          ${challengeHtml}
+        </div>
+        ${footerHtml}
+      `;
+
+      return pageDiv;
+    }
+
+    function triggerPrint() {
+      window.print();
+    }
+
+    function initPeerRemote() {
+      const pin = Math.floor(1000 + Math.random() * 9000).toString();
+      appState.roomPin = pin;
+      document.getElementById('remote-pin-display').innerText = pin;
+
+      const peerId = `lab10table-room-${pin}`;
+      
+      try {
+        appState.peer = new Peer(peerId);
+
+        appState.peer.on('open', (id) => {
+          console.log('Classroom Board ready with Peer ID:', id);
+        });
+
+        appState.peer.on('connection', (conn) => {
+          appState.conn = conn;
+          setupConnectionHandlers();
+        });
+
+        appState.peer.on('error', (err) => {
+          console.warn('Peer connection info:', err.type);
+        });
+      } catch (e) {
+        console.warn('PeerJS initialization skipped:', e);
+      }
+    }
+
+    function setupConnectionHandlers() {
+      document.getElementById('remote-dot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping';
+      document.getElementById('remote-text').innerText = 'Teacher Connected';
+
+      appState.conn.on('data', (data) => {
+        if (data.type === 'key') {
+          pressKey(data.key);
+        } else if (data.type === 'grid_click') {
+          handleFactCellClick(data.r, data.c);
+        }
+      });
+
+      appState.conn.on('close', () => {
+        document.getElementById('remote-dot').className = 'w-2.5 h-2.5 rounded-full bg-slate-400';
+        document.getElementById('remote-text').innerText = 'Remote Controller';
+      });
+    }
+
+    function sendRemoteKey(key) {
+      if (appState.conn) {
+        appState.conn.send({ type: 'key', key });
+      }
+    }
+
+    function sendRemoteGridClick(r, c) {
+      if (appState.conn) {
+        appState.conn.send({ type: 'grid_click', r, c });
+      }
+    }
+
+    function sendRemoteKeypadPreview(val) {
+      const prev = document.getElementById('remote-keypad-preview');
+      if (prev) prev.innerText = val || '--';
+    }
+
+    function sendRemoteGridSync() {
+      const remoteGrid = document.getElementById('remote-grid-container');
+      if (!remoteGrid) return;
+      remoteGrid.innerHTML = '';
+
+      for (let r = 0; r <= 10; r++) {
+        for (let c = 0; c <= 10; c++) {
+          const btn = document.createElement('button');
+          const st = appState.grid[r][c];
+          let bg = 'bg-slate-100 text-slate-600';
+          if (st === 1) bg = 'bg-amber-300 text-amber-900 font-bold';
+          if (st === 2) bg = 'bg-orange-300 text-orange-950 font-bold';
+          if (st === 3) bg = 'bg-emerald-300 text-emerald-950 font-bold';
+
+          btn.className = `h-7 rounded text-[10px] flex items-center justify-center border border-slate-200 ${bg}`;
+          btn.innerText = `${r}x${c}`;
+          btn.onclick = () => sendRemoteGridClick(r, c);
+          remoteGrid.appendChild(btn);
+        }
+      }
+    }
+
+    function copyRemoteLink() {
+      const url = `${window.location.origin}${window.location.pathname}#remote-${appState.roomPin}`;
+      navigator.clipboard ? navigator.clipboard.writeText(url) : document.execCommand('copy');
+      alert(`Copied remote access link! Access PIN: ${appState.roomPin}`);
+    }
+
+    function connectAsTeacherPrompt() {
+      const pin = prompt('Enter 4-Digit Room PIN:');
+      if (pin) {
+        connectTeacherRemote(pin);
+      }
+    }
+
+    function connectTeacherRemote(pin) {
+      closeRemoteModal();
+      appState.isRemote = true;
+      document.getElementById('teacher-remote-screen').classList.remove('hidden');
+
+      const peerId = `lab10table-remote-${Math.floor(Math.random()*1000)}`;
+      try {
+        const teacherPeer = new Peer(peerId);
+
+        teacherPeer.on('open', () => {
+          const conn = teacherPeer.connect(`lab10table-room-${pin}`);
+          appState.conn = conn;
+
+          conn.on('open', () => {
+            console.log('Connected to Classroom Board!');
+            sendRemoteGridSync();
+          });
+        });
+      } catch (e) {
+        console.warn('Teacher remote peer error:', e);
+      }
+    }
+
+    function setRemoteViewMode(mode) {
+      const keypadView = document.getElementById('remote-view-keypad');
+      const gridView = document.getElementById('remote-view-grid');
+      const tabKeypad = document.getElementById('remote-tab-keypad');
+      const tabGrid = document.getElementById('remote-tab-grid');
+
+      if (mode === 'keypad') {
+        keypadView.classList.remove('hidden');
+        gridView.classList.add('hidden');
+        tabKeypad.className = 'flex-1 py-2 rounded-lg text-xs font-bold bg-white text-amber-700 shadow-sm';
+        tabGrid.className = 'flex-1 py-2 rounded-lg text-xs font-bold text-slate-600';
+      } else {
+        keypadView.classList.add('hidden');
+        gridView.classList.remove('hidden');
+        tabGrid.className = 'flex-1 py-2 rounded-lg text-xs font-bold bg-white text-amber-700 shadow-sm';
+        tabKeypad.className = 'flex-1 py-2 rounded-lg text-xs font-bold text-slate-600';
+        sendRemoteGridSync();
+      }
+    }
+
+    function disconnectRemote() {
+      if (appState.conn) appState.conn.close();
+      document.getElementById('teacher-remote-screen').classList.add('hidden');
+    }
+
+    function openRemoteModal() {
+      document.getElementById('remote-modal').classList.remove('hidden');
+    }
+    function closeRemoteModal() {
+      document.getElementById('remote-modal').classList.add('hidden');
+    }
+
+    window.onload = function() {
+      loadSavedState();
+      renderMapGrid();
+      renderLessonsButtons();
+      updateLessonStage();
+      initPeerRemote();
+
+      if (window.location.hash.startsWith('#remote-')) {
+        const pin = window.location.hash.replace('#remote-', '');
+        connectTeacherRemote(pin);
+      }
+    };
+  </script>
+</body>
+</html>
